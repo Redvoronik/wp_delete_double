@@ -56,8 +56,8 @@ function getArticles($wpdb): array
 	return $articles;
 }
 
-if($remove_id = $_GET['remove_id']) {
-	removeById($remove_id, $wpdb);
+if(isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
+	removeById($_GET['remove_id'], $wpdb);
 }
 
 $articles = getArticles($wpdb);
