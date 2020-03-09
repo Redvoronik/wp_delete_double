@@ -3,12 +3,12 @@ global $wpdb;
 
 ini_set("memory_limit", "1024M");
 
-function checkHeader($article): array
+function checkHeader($content): array
 {
 	$doubles = [];
 
 	$preg = '|<h[23]>(.+)</h[23]>|isU';
-	preg_match_all($preg, $article->post_content, $headers);
+	preg_match_all($preg, $content, $headers);
 
 	if($headers && isset($headers[1])) {
 		if(count($headers[1]) - count(array_unique($headers[1])) > 0) {
@@ -23,25 +23,40 @@ function checkHeader($article): array
 	return $doubles;
 }
 
+function removeLastParagraph(string $content)
+{
+	$paragraphs = explode('<h', $content);
+	unset($paragraphs[count($paragraphs)-1]);
+
+	return implode('<h', $paragraphs);
+}
+
 function removeById(int $remove_id, $wpdb): bool
 {
 	$article = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE `ID` = '$remove_id'")[0];
-	$doubles = checkHeader($article);
+	$doubles = checkHeader($article->post_content);
 	$content = $article->post_content;
-	$iter = 0;
 
-	while(!empty($doubles) && $iter < 20) {
-		$iter++;
-		$doubles = checkHeader($article);
+	foreach ($doubles as $header) {
+		$header = str_replace('?', '\?', $header);
+		$header = str_replace(',', '\,', $header);
+		$header = str_replace('(', '\(', $header);
+		$header = str_replace(')', '\)', $header);
+		$header = str_replace(':', '\:', $header);
+		$preg = '|[23]>' . $header . '</h[23]>(.+)<h|isU';
+		preg_match_all($preg, $content, $paragraphs);
 
-		foreach ($doubles as $header) {
-			preg_match_all('|[23]>' . $header . '</h[23]>(.+)<h|isU', $content, $paragraphs);
-			
-			if(isset(($paragraphs)[1]) && !empty(($paragraphs)[1])) {
-				$content = str_replace('<h2>' . $header . '</h2>' . end(($paragraphs)[1]), '', $content);
-				$content = str_replace('<h3>' . $header . '</h3>' . end(($paragraphs)[1]), '', $content);
-			}
+		unset($paragraphs[1][0]);
+		unset($paragraphs[0][0]);
+
+		foreach ($paragraphs[0] as $paragraph) {
+			$content = str_replace('<h' . mb_substr($paragraph, 0, -2), '', $content);
 		}
+	}
+
+	$doubles = checkHeader($content);
+	if(count($doubles) > 0) {
+		$content = removeLastParagraph($content);
 	}
 
 	return $wpdb->query("UPDATE $wpdb->posts SET post_content = '$content'  WHERE `ID` = '$remove_id'");
@@ -52,7 +67,7 @@ function getArticles($wpdb): array
 	$articles = $wpdb->get_results("SELECT ID as id, post_name, post_title, post_content FROM $wpdb->posts WHERE `post_status` = 'publish' AND (`post_content` LIKE '%<h2%' OR `post_content` LIKE '%<h3%')");
 
 	foreach ($articles as $key => $article) {
-		$doubles = checkHeader($article);
+		$doubles = checkHeader($article->post_content);
 		$articles[$key]->doubles = $doubles;
 		if(empty($doubles)) unset($articles[$key]);
 	}
