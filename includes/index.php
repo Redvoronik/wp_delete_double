@@ -43,6 +43,9 @@ function removeById(int $remove_id, $wpdb): bool
 		$header = str_replace('(', '\(', $header);
 		$header = str_replace(')', '\)', $header);
 		$header = str_replace(':', '\:', $header);
+		$header = str_replace('-', '\-', $header);
+		$header = str_replace('+', '\+', $header);
+		$header = str_replace('\'', '"', $header);
 		$preg = '|[23]>' . $header . '</h[23]>(.+)<h|isU';
 		preg_match_all($preg, $content, $paragraphs);
 
@@ -58,6 +61,8 @@ function removeById(int $remove_id, $wpdb): bool
 	if(count($doubles) > 0) {
 		$content = removeLastParagraph($content);
 	}
+
+	$content = str_replace('\'', '"', $content);
 
 	return $wpdb->query("UPDATE $wpdb->posts SET post_content = '$content'  WHERE `ID` = '$remove_id'");
 }
@@ -77,6 +82,11 @@ function getArticles($wpdb): array
 
 if(isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 	removeById($_GET['remove_id'], $wpdb);
+} elseif(isset($_GET['remove_all']) && !empty($_GET['remove_all'])) {
+	$articles = getArticles($wpdb);
+	foreach ($articles as $article) {
+		removeById($article->id, $wpdb);
+	}
 }
 
 $articles = getArticles($wpdb);
@@ -84,6 +94,7 @@ $articles = getArticles($wpdb);
 
 <h1>Дубли заголовков</h1>
 
+<a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a><br>
 <?php if(!empty($articles)): ?>
 <table style="margin-top: 30px;" class="wp-list-table widefat fixed striped">
 	<thead>
