@@ -31,6 +31,33 @@ function removeLastParagraph(string $content)
 	return implode('<h', $paragraphs);
 }
 
+function removeEmptyParagraphs($article, $wpdb, $forceUpdate = false)
+{
+	$content = $article->post_content;
+	$article_id = (!empty($article->ID)) ? $article->ID : $article->id;
+	$update = false;
+
+	$preg = '|<h[23]>(.+)</h[23]>|isU';
+	preg_match_all($preg, $content, $headers);
+
+	foreach ($headers[1] as $key => $header) {
+		$preg = '|[23]>' . $header . '</h[23]>(.+)<h|isU';		
+		preg_match_all($preg, $content, $paragraphs);
+		$paragraphs = array_filter($paragraphs[1]);
+
+		if(isset($paragraphs[0]) && strlen(strip_tags($paragraphs[0])) < 150) {
+			$content = str_replace($headers[0][$key], '', $content);
+			$update = true;
+		}
+	}
+
+	if($update && $forceUpdate) {
+		return $wpdb->query("UPDATE $wpdb->posts SET post_content = '$content'  WHERE `ID` = '$article_id'");
+	}
+
+	return $update;
+}
+
 function removeById(int $remove_id, $wpdb): bool
 {
 	$article = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE `ID` = '$remove_id'")[0];
@@ -46,6 +73,9 @@ function removeById(int $remove_id, $wpdb): bool
 		$header = str_replace('-', '\-', $header);
 		$header = str_replace('+', '\+', $header);
 		$header = str_replace('\'', '"', $header);
+		$header = str_replace('.', '\.', $header);
+		$header = str_replace('*', '\*', $header);
+		
 		$preg = '|[23]>' . $header . '</h[23]>(.+)<h|isU';
 		preg_match_all($preg, $content, $paragraphs);
 
@@ -67,14 +97,20 @@ function removeById(int $remove_id, $wpdb): bool
 	return $wpdb->query("UPDATE $wpdb->posts SET post_content = '$content'  WHERE `ID` = '$remove_id'");
 }
 
-function getArticles($wpdb): array
+function getArticles($wpdb, $check = true): array
 {
 	$articles = $wpdb->get_results("SELECT ID as id, post_name, post_title, post_content FROM $wpdb->posts WHERE `post_status` = 'publish' AND (`post_content` LIKE '%<h2%' OR `post_content` LIKE '%<h3%')");
 
-	foreach ($articles as $key => $article) {
-		$doubles = checkHeader($article->post_content);
-		$articles[$key]->doubles = $doubles;
-		if(empty($doubles)) unset($articles[$key]);
+	if($check) {
+		foreach ($articles as $key => $article) {
+			$doubles = checkHeader($article->post_content);
+
+			if(removeEmptyParagraphs($article, $wpdb)) $doubles[] = 'ПУСТЫЕ ЗАГОЛОВКИ';
+
+			$articles[$key]->doubles = $doubles;
+
+			if(empty($doubles)) unset($articles[$key]);
+		}
 	}
 
 	return $articles;
@@ -82,10 +118,18 @@ function getArticles($wpdb): array
 
 if(isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 	removeById($_GET['remove_id'], $wpdb);
+	$remove_id = $_GET['remove_id'];
+	$article = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE `ID` = '$remove_id'")[0];
+	removeEmptyParagraphs($article, $wpdb, true);
 } elseif(isset($_GET['remove_all']) && !empty($_GET['remove_all'])) {
 	$articles = getArticles($wpdb);
 	foreach ($articles as $article) {
 		removeById($article->id, $wpdb);
+	}
+} elseif(isset($_GET['remove_empty']) && !empty($_GET['remove_empty'])) {
+	$articles = getArticles($wpdb, false);
+	foreach ($articles as $article) {
+		removeEmptyParagraphs($article, $wpdb, true);
 	}
 }
 
@@ -94,7 +138,8 @@ $articles = getArticles($wpdb);
 
 <h1>Дубли заголовков</h1>
 
-<a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a><br>
+<a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a>
+  <a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a><br>
 <?php if(!empty($articles)): ?>
 <table style="margin-top: 30px;" class="wp-list-table widefat fixed striped">
 	<thead>
