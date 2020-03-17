@@ -23,6 +23,22 @@ function checkHeader($content): array
 	return $doubles;
 }
 
+function checkTable($content): bool
+{
+	$preg = '|<table(.+)</table>|isU';
+	preg_match_all($preg, $content, $tables);
+	$finded = false;
+
+	foreach ($tables[1] as $table) {
+		if(stristr($table, "</h") === FALSE) {
+			$finded = true;
+			break;
+		}
+	}
+
+	return $finded;
+}
+
 function removeLastParagraph(string $content)
 {
 	$paragraphs = explode('<h', $content);
@@ -108,6 +124,7 @@ function getArticles($wpdb, $check = true): array
 			$doubles = checkHeader($article->post_content);
 
 			if(removeEmptyParagraphs($article, $wpdb)) $doubles[] = 'ПУСТЫЕ ЗАГОЛОВКИ';
+			if(checkTable($article->post_content)) $doubles[] = 'ЗАГОЛОВОК В ТАБЛИЦЕ';
 
 			$articles[$key]->doubles = $doubles;
 
