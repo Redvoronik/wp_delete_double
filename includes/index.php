@@ -43,11 +43,13 @@ function removeEmptyParagraphs($article, $wpdb, $forceUpdate = false)
 	foreach ($headers[1] as $key => $header) {
 		$preg = '|[23]>' . $header . '</h[23]>(.+)<h|isU';		
 		preg_match_all($preg, $content, $paragraphs);
-		$paragraphs = array_filter($paragraphs[1]);
+		if(isset($paragraphs[1])) {
+			$paragraphs = array_filter($paragraphs[1]);
 
-		if(isset($paragraphs[0]) && strlen(strip_tags($paragraphs[0])) < 150) {
-			$content = str_replace($headers[0][$key], '', $content);
-			$update = true;
+			if(isset($paragraphs[0]) && strlen(strip_tags($paragraphs[0])) < 150) {
+				$content = str_replace($headers[0][$key], '', $content);
+				$update = true;
+			}
 		}
 	}
 
