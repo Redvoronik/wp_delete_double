@@ -20,5 +20,13 @@ function createLinkOnMainMenuDouble()
         null,
         'dashicons-admin-page'
     );
+
+    add_submenu_page(
+        null,
+        'Перемешать',
+        'Перемешать параграфы',
+        'edit_others_posts',
+        '/wp_delete_double/includes/rand.php'
+    );
 }
 

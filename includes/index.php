@@ -135,7 +135,7 @@ function getArticles($wpdb, $check = true): array
 	return $articles;
 }
 
-if(isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
+if (isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 	removeById($_GET['remove_id'], $wpdb);
 	$remove_id = $_GET['remove_id'];
 	$article = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE `ID` = '$remove_id'")[0];
@@ -154,8 +154,11 @@ if(isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 
 $articles = getArticles($wpdb);
 ?>
+<a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php">Дубли заголовков</a>
+<a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Frand.php">Перемешать параграфы</a><br><br>
 
 <h1>Дубли заголовков</h1>
+
 
 <a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a>
   <a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a><br>
