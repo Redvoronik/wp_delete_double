@@ -5,7 +5,7 @@ ini_set("memory_limit", "1024M");
 
 function getArticles($wpdb, $check = true): array
 {
-	$articles = $wpdb->get_results("SELECT ID as id, post_name, post_title, post_content FROM $wpdb->posts WHERE `post_status` = 'publish' AND (`post_content` LIKE '%<h2%' OR `post_content` LIKE '%<h3%')");
+	$articles = $wpdb->get_results("SELECT ID as id, post_name, post_title, post_content FROM $wpdb->posts WHERE (`post_content` LIKE '%<h2%')");
 	return $articles;
 }
 
