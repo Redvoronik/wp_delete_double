@@ -7,7 +7,7 @@ function checkHeader($content): array
 {
 	$doubles = [];
 
-	$preg = '|<h[23]>(.+)</h[23]>|isU';
+	$preg = "|<h[23]>(.+)</h[23]>|isU";
 	preg_match_all($preg, $content, $headers);
 
 	if($headers && isset($headers[1])) {
@@ -57,8 +57,21 @@ function removeEmptyParagraphs($article, $wpdb, $forceUpdate = false)
 	preg_match_all($preg, $content, $headers);
 
 	foreach ($headers[1] as $key => $header) {
-		$preg = "|[23]>" . quotemeta($header) . "</h[23]>(.+)<h|isU";		
+	    $header = str_replace('?', '\?', $header);
+		$header = str_replace(',', '\,', $header);
+		$header = str_replace('(', '\(', $header);
+		$header = str_replace(')', '\)', $header);
+		$header = str_replace(':', '\:', $header);
+		$header = str_replace('-', '\-', $header);
+		$header = str_replace('+', '\+', $header);
+		$header = str_replace('\'', '"', $header);
+		$header = str_replace('.', '\.', $header);
+		$header = str_replace('*', '\*', $header);
+		$header = str_replace('|', '\|', $header);
+		
+		$preg = "|[23]>" . htmlspecialchars($header, ENT_HTML5) . "</h[23]>(.+)<h|isU";		
 		preg_match_all($preg, $content, $paragraphs);
+		
 		if(isset($paragraphs[1])) {
 			$paragraphs = array_filter($paragraphs[1]);
 
@@ -66,6 +79,8 @@ function removeEmptyParagraphs($article, $wpdb, $forceUpdate = false)
 				$content = str_replace($headers[0][$key], '', $content);
 				$update = true;
 			}
+		} else { 
+		    echo('Error: ' . ($header) . '<br>');
 		}
 	}
 
@@ -93,6 +108,7 @@ function removeById(int $remove_id, $wpdb): bool
 		$header = str_replace('\'', '"', $header);
 		$header = str_replace('.', '\.', $header);
 		$header = str_replace('*', '\*', $header);
+		$header = str_replace('|', '\|', $header);
 		
 		$preg = "|[23]>" . quotemeta($header) . "</h[23]>(.+)<h|isU";
 		preg_match_all($preg, $content, $paragraphs);
