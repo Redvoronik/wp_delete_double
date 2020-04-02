@@ -23,6 +23,14 @@ function checkHeader($content): array
 	return $doubles;
 }
 
+function checkPostName($article, $wpdb)
+{
+	if(empty($article->post_name) || $article->post_name == '') {
+		$article_id = $article->id;
+		$wpdb->query("UPDATE $wpdb->posts SET post_name = '" . translit($article->post_title) . "'  WHERE `ID` = '$article_id'");
+	}
+}
+
 function checkTable($content): bool
 {
 	$preg = '|<table(.+)</table>|isU';
@@ -151,6 +159,22 @@ function getArticles($wpdb, $check = true): array
 	return $articles;
 }
 
+define('LNGtranslit1','а,б,в,г,д,е,ё,ж,з,и,й,к,л,м,н,о,п,р,с,т,у,ф,х,ц,ч,ш,ы,ь,щ,ъ,э,ю,я');
+define('LNGtranslit2','a,b,v,g,d,e,yo,j,z,i,iy,k,l,m,n,o,p,r,s,t,u,f,h,c,ch,sh,y,,sh,,e,yu,ya');
+
+function translit($string,$max=250) {
+    $string=mb_strtolower($string,'UTF-8');
+    $d1=explode(',',LNGtranslit1);
+    $d2=explode(',',LNGtranslit2);
+    $string=str_replace($d1,$d2,$string);
+    $d1=array(' ',',','&','і');
+    $d2=array('-','-','-and-','i');
+    $string=str_replace($d1,$d2,$string);
+    $string=preg_replace('|[^A-Za-z0-9\._+-]|','',$string);
+    if(strlen($string)>$max) $string=substr($string,0,$max);
+    return $string;
+}
+
 if (isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 	removeById($_GET['remove_id'], $wpdb);
 	$remove_id = $_GET['remove_id'];
@@ -166,6 +190,11 @@ if (isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 	foreach ($articles as $article) {
 		removeEmptyParagraphs($article, $wpdb, true);
 	}
+} elseif(isset($_GET['update_urls'])) {
+	$articles = getArticles($wpdb, false);
+	foreach ($articles as $article) {
+		checkPostName($article, $wpdb);
+	}
 }
 
 $articles = getArticles($wpdb);
@@ -177,7 +206,8 @@ $articles = getArticles($wpdb);
 
 
 <a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a>
-  <a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a><br>
+<a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a><br>
+<a onclick="return confirm('Будут сгенерированы url для пустых')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&update_urls=true">Сгенерировать ссылки</a><br>
 <?php if(!empty($articles)): ?>
 <table style="margin-top: 30px;" class="wp-list-table widefat fixed striped">
 	<thead>
