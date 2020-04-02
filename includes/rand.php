@@ -47,8 +47,8 @@ $articles = getArticles($wpdb);
 ?>
 
 <a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php">Дубли заголовков</a>
-<a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Frand.php">Перемешать параграфы</a><br><br>
-
+<a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Frand.php">Перемешать параграфы</a>
+<a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Fsearch.php">Поиск</a><br><br>
 <h1>Перемешать параграфы</h1>
 
 <a onclick="return confirm('Перемешать все параграфы?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Frand.php&rand_all=true">Перемешать всё</a>
