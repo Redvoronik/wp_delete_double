@@ -33,7 +33,7 @@ function checkPostName($article, $wpdb)
 
 function updateBuggedPostName($wpdb)
 {
-	$articles = $wpdb->get_results("SELECT ID as id, post_name, post_title, post_content FROM $wpdb->posts WHERE (`post_content` LIKE '%<h2%' OR `post_content` LIKE '%<h3%') AND (`post_name` LIKE '%\%%' OR `post_name` LIKE '%\revision%')");
+	$articles = $wpdb->get_results("SELECT ID as id, post_name, post_title, post_content FROM $wpdb->posts WHERE (`post_content` LIKE '%<h2%' OR `post_content` LIKE '%<h3%') AND (`post_name` LIKE '%\%%' OR `post_name` LIKE '%revision%' OR post_name REGEXP 'а|б|в|г|д|е|ж')");
 
 	foreach ($articles as $key => $article) {
 		$article_id = $article->id;
