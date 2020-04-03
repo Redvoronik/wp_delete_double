@@ -31,6 +31,16 @@ function checkPostName($article, $wpdb)
 	}
 }
 
+function updateBuggedPostName($wpdb)
+{
+	$articles = $wpdb->get_results("SELECT ID as id, post_name, post_title, post_content FROM $wpdb->posts WHERE (`post_content` LIKE '%<h2%' OR `post_content` LIKE '%<h3%') AND `post_name` LIKE '%\%%'");
+
+	foreach ($articles as $key => $article) {
+		$article_id = $article->id;
+		$wpdb->query("UPDATE $wpdb->posts SET post_name = '" . translit($article->post_title) . "'  WHERE `ID` = '$article_id'");
+	}
+}
+
 function checkTable($content): bool
 {
 	$preg = '|<table(.+)</table>|isU';
@@ -203,6 +213,9 @@ if (isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 	removeDeffice($wpdb);
 } elseif(isset($_GET['remove_deffice'])) {
 	removeDeffice($wpdb);
+} elseif(isset($_GET['update_bug_urls'])) {
+	updateBuggedPostName($wpdb);
+	removeDeffice($wpdb);
 }
 
 $articles = getArticles($wpdb);
@@ -213,9 +226,10 @@ $articles = getArticles($wpdb);
 <h1>Дубли заголовков</h1>
 
 
-<a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a>
-<a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a>
-<a onclick="return confirm('Будут сгенерированы url для пустых')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&update_urls=true">Сгенерировать ссылки</a>
+<a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a> | 
+<a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a> | 
+<a onclick="return confirm('Будут сгенерированы url для пустых')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&update_urls=true">Сгенерировать ссылки</a> | 
+<a onclick="return confirm('Будут перегенерированы кривые url')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&update_bug_urls=true">Перегенерировать кривые ссылки</a> | 
 <a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_deffice=true">Убрать двойные тире</a><br>
 <?php if(!empty($articles)): ?>
 <table style="margin-top: 30px;" class="wp-list-table widefat fixed striped">
