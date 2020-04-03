@@ -117,8 +117,8 @@ function removeById(int $remove_id, $wpdb): bool
 		$header = str_replace('.', '\.', $header);
 		$header = str_replace('*', '\*', $header);
 		$header = str_replace('|', '\|', $header);
-		
-		$preg = "|[23]>" . quotemeta($header) . "</h[23]>(.+)<h|isU";
+
+		$preg = "|[23]>" . ($header) . "</h[23]>(.+)<h|isU";
 		preg_match_all($preg, $content, $paragraphs);
 
 		unset($paragraphs[1][0]);
