@@ -159,6 +159,11 @@ function getArticles($wpdb, $check = true): array
 	return $articles;
 }
 
+function removeDeffice($wpdb)
+{
+	return $wpdb->query("UPDATE $wpdb->posts SET post_name = REPLACE(post_name, '--', '-')");
+}
+
 define('LNGtranslit1','а,б,в,г,д,е,ё,ж,з,и,й,к,л,м,н,о,п,р,с,т,у,ф,х,ц,ч,ш,ы,ь,щ,ъ,э,ю,я');
 define('LNGtranslit2','a,b,v,g,d,e,yo,j,z,i,iy,k,l,m,n,o,p,r,s,t,u,f,h,c,ch,sh,y,,sh,,e,yu,ya');
 
@@ -195,6 +200,9 @@ if (isset($_GET['remove_id']) && !empty($_GET['remove_id'])) {
 	foreach ($articles as $article) {
 		checkPostName($article, $wpdb);
 	}
+	removeDeffice($wpdb);
+} elseif(isset($_GET['remove_deffice'])) {
+	removeDeffice($wpdb);
 }
 
 $articles = getArticles($wpdb);
@@ -206,11 +214,13 @@ $articles = getArticles($wpdb);
 
 
 <a onclick="return confirm('Очистить все дубли заголовков?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_all=true">Очистить всё</a>
-<a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a><br>
-<a onclick="return confirm('Будут сгенерированы url для пустых')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&update_urls=true">Сгенерировать ссылки</a><br>
+<a onclick="return confirm('Очистить пустые заголовки?')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_empty=true">Очистить пустые</a>
+<a onclick="return confirm('Будут сгенерированы url для пустых')" href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&update_urls=true">Сгенерировать ссылки</a>
+<a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_deffice=true">Убрать двойные тире</a><br>
 <?php if(!empty($articles)): ?>
 <table style="margin-top: 30px;" class="wp-list-table widefat fixed striped">
 	<thead>
+		<th>id</th>
 		<th>Статья</th>
 		<th>Кол-во дублей</th>
 		<th>Действия</th>
@@ -218,6 +228,7 @@ $articles = getArticles($wpdb);
 	<tbody>
 		<?php foreach($articles as $key => $article): ?>
 			<tr>
+				<td><?= $article->id ?></td>
 				<td><a target="_blank" href="/<?= $article->post_name ?>/"><?= $article->post_title ?></a></td>
 				<td><?= implode('<br>', $article->doubles) ?></td>
 				<td><a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Findex.php&remove_id=<?= $article->id ?>">Очистить</a></td>

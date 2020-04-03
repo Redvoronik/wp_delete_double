@@ -13,7 +13,7 @@ function getArticles($wpdb, $str = ''): array
 
 function updateParagraph($wpdb, $str, $article_id)
 {
-	return $wpdb->query("UPDATE $wpdb->posts SET post_title = REPLACE(post_title, '{$str}', '')");
+	return $wpdb->query("UPDATE $wpdb->posts SET post_title = REPLACE(post_title, '{$str}', '') WHERE ID = {$article_id}");
 }
 
 if(isset($_GET['str']) && isset($_GET['article_id'])) {
@@ -45,12 +45,14 @@ if(isset($_GET['str']) && isset($_GET['article_id'])) {
 
 <table style="margin-top: 30px;" class="wp-list-table widefat fixed striped">
 	<thead>
+		<th>ID</th>
 		<th>Статья</th>
 		<th>Действия</th>
 	</thead>
 	<tbody>
 		<?php foreach($articles as $key => $article): ?>
 			<tr>
+				<td><?= $article->id ?></td>
 				<td><a target="_blank" href="/<?= $article->post_name ?>/"><?= $article->post_title ?></a></td>
 				<td><a href="/wp-admin/admin.php?page=wp_delete_double%2Fincludes%2Fsearch.php&article_id=<?= $article->id ?>&str=<?= $_GET['str'] ?>">Удалить</a></td>
 			</tr>
